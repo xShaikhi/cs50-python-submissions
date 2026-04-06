@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>X O - لعبة إكس أو</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0f0f1a;
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      text-align: center;
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 2.4rem;
+      margin-bottom: 8px;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #4fc3f7, #f06292);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Mode Selection ── */
+    #mode-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-top: 40px;
+    }
+
+    #mode-screen p {
+      font-size: 1.1rem;
+      color: #aaa;
+      margin-bottom: 8px;
+    }
+
+    .mode-btn {
+      width: 240px;
+      padding: 16px;
+      border: 2px solid #333;
+      border-radius: 14px;
+      background: #1a1a2e;
+      color: #fff;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mode-btn:hover {
+      border-color: #4fc3f7;
+      background: #16213e;
+      transform: translateY(-2px);
+    }
+
+    .mode-btn span {
+      display: block;
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    /* ── Game Screen ── */
+    #game-screen {
+      display: none;
+    }
+
+    .turn-info {
+      font-size: 1.1rem;
+      color: #ccc;
+      margin: 16px 0 10px;
+      min-height: 28px;
+    }
+
+    .turn-info .symbol {
+      font-weight: bold;
+      font-size: 1.3rem;
+    }
+
+    .symbol-x { color: #4fc3f7; }
+    .symbol-o { color: #f06292; }
+
+    /* ── Score ── */
+    .scoreboard {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .score-box {
+      background: #1a1a2e;
+      border: 1px solid #2a2a3e;
+      border-radius: 10px;
+      padding: 8px 16px;
+      min-width: 70px;
+    }
+
+    .score-box .label {
+      font-size: 0.7rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .score-box .value {
+      font-size: 1.6rem;
+      font-weight: bold;
+      margin-top: 2px;
+    }
+
+    #score-x .value { color: #4fc3f7; }
+    #score-draw .value { color: #aaa; }
+    #score-o .value { color: #f06292; }
+
+    /* ── Board ── */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 0 auto 20px;
+      max-width: 300px;
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      background: #1a1a2e;
+      border: 2px solid #2a2a3e;
+      border-radius: 12px;
+      font-size: 2.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, transform 0.1s, border-color 0.15s;
+      user-select: none;
+    }
+
+    .cell:hover:not(.taken) {
+      background: #16213e;
+      border-color: #3a3a5e;
+    }
+
+    .cell.taken {
+      cursor: default;
+    }
+
+    .cell.x { color: #4fc3f7; }
+    .cell.o { color: #f06292; }
+
+    .cell.win {
+      background: #1e2a1e;
+      border-color: #66bb6a;
+      animation: pulse 0.4s ease;
+    }
+
+    .cell.x.win { background: #0d2030; border-color: #4fc3f7; }
+    .cell.o.win { background: #2d0f1e; border-color: #f06292; }
+
+    @keyframes pulse {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes popIn {
+      0%   { transform: scale(0.5); opacity: 0; }
+      70%  { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .cell .mark {
+      display: inline-block;
+      animation: popIn 0.2s ease forwards;
+    }
+
+    /* ── Result Banner ── */
+    .result-banner {
+      font-size: 1.3rem;
+      font-weight: bold;
+      min-height: 36px;
+      margin-bottom: 14px;
+    }
+
+    /* ── Buttons ── */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    button.action-btn {
+      padding: 10px 22px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    button.action-btn:hover {
+      opacity: 0.85;
+      transform: translateY(-1px);
+    }
+
+    .btn-restart {
+      background: #4fc3f7;
+      color: #000;
+      font-weight: bold;
+    }
+
+    .btn-menu {
+      background: #2a2a3e;
+      color: #ccc;
+    }
+
+    /* ── Thinking indicator ── */
+    .thinking {
+      color: #888;
+      font-size: 0.9rem;
+      margin-top: -8px;
+      margin-bottom: 6px;
+      min-height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>✕ ○</h1>
+
+    <!-- Mode Selection -->
+    <div id="mode-screen">
+      <p>اختار طريقة اللعب</p>
+      <button class="mode-btn" onclick="startGame('two')">
+        👥 لاعبان
+        <span>أنت وصديقك على نفس الجهاز</span>
+      </button>
+      <button class="mode-btn" onclick="startGame('ai')">
+        🤖 ضد الكمبيوتر
+        <span>العب ضد ذكاء اصطناعي</span>
+      </button>
+    </div>
+
+    <!-- Game -->
+    <div id="game-screen">
+      <div class="scoreboard">
+        <div class="score-box" id="score-x">
+          <div class="label" id="label-x">X</div>
+          <div class="value" id="val-x">0</div>
+        </div>
+        <div class="score-box" id="score-draw">
+          <div class="label">تعادل</div>
+          <div class="value" id="val-draw">0</div>
+        </div>
+        <div class="score-box" id="score-o">
+          <div class="label" id="label-o">O</div>
+          <div class="value" id="val-o">0</div>
+        </div>
+      </div>
+
+      <div class="turn-info" id="turn-info"></div>
+      <div class="thinking" id="thinking"></div>
+
+      <div class="board" id="board">
+        <div class="cell" onclick="handleClick(0)"></div>
+        <div class="cell" onclick="handleClick(1)"></div>
+        <div class="cell" onclick="handleClick(2)"></div>
+        <div class="cell" onclick="handleClick(3)"></div>
+        <div class="cell" onclick="handleClick(4)"></div>
+        <div class="cell" onclick="handleClick(5)"></div>
+        <div class="cell" onclick="handleClick(6)"></div>
+        <div class="cell" onclick="handleClick(7)"></div>
+        <div class="cell" onclick="handleClick(8)"></div>
+      </div>
+
+      <div class="result-banner" id="result-banner"></div>
+
+      <div class="btn-row">
+        <button class="action-btn btn-restart" onclick="restartGame()">جولة جديدة</button>
+        <button class="action-btn btn-menu" onclick="goMenu()">القائمة</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const WINS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+    let mode = '';
+    let board = Array(9).fill(null);
+    let current = 'X';
+    let gameOver = false;
+    let scores = { X: 0, O: 0, D: 0 };
+
+    function startGame(m) {
+      mode = m;
+      document.getElementById('mode-screen').style.display = 'none';
+      document.getElementById('game-screen').style.display = 'block';
+
+      if (mode === 'ai') {
+        document.getElementById('label-x').textContent = 'أنت (X)';
+        document.getElementById('label-o').textContent = 'كمبيوتر (O)';
+      } else {
+        document.getElementById('label-x').textContent = 'لاعب X';
+        document.getElementById('label-o').textContent = 'لاعب O';
+      }
+
+      resetBoard();
+    }
+
+    function resetBoard() {
+      board = Array(9).fill(null);
+      current = 'X';
+      gameOver = false;
+      document.getElementById('result-banner').textContent = '';
+      document.getElementById('thinking').textContent = '';
+      renderBoard();
+      updateTurnInfo();
+    }
+
+    function restartGame() { resetBoard(); }
+
+    function goMenu() {
+      scores = { X: 0, O: 0, D: 0 };
+      updateScores();
+      document.getElementById('game-screen').style.display = 'none';
+      document.getElementById('mode-screen').style.display = 'flex';
+    }
+
+    function handleClick(i) {
+      if (gameOver || board[i]) return;
+      if (mode === 'ai' && current === 'O') return;
+
+      makeMove(i, current);
+      if (!gameOver && mode === 'ai' && current === 'O') {
+        document.getElementById('thinking').textContent = 'الكمبيوتر يفكر...';
+        setTimeout(() => {
+          const best = bestMove();
+          document.getElementById('thinking').textContent = '';
+          makeMove(best, 'O');
+        }, 300);
+      }
+    }
+
+    function makeMove(i, player) {
+      board[i] = player;
+      renderBoard();
+
+      const winLine = getWinner(board);
+      if (winLine) {
+        highlightWin(winLine, player);
+        gameOver = true;
+        scores[player]++;
+        updateScores();
+        const name = mode === 'ai'
+          ? (player === 'X' ? '🎉 فزت!' : '🤖 الكمبيوتر فاز!')
+          : `🏆 فاز اللاعب ${player}!`;
+        document.getElementById('result-banner').innerHTML =
+          `<span class="symbol-${player.toLowerCase()}">${name}</span>`;
+        document.getElementById('turn-info').textContent = '';
+        return;
+      }
+
+      if (board.every(c => c)) {
+        gameOver = true;
+        scores.D++;
+        updateScores();
+        document.getElementById('result-banner').textContent = '🤝 تعادل!';
+        document.getElementById('turn-info').textContent = '';
+        return;
+      }
+
+      current = current === 'X' ? 'O' : 'X';
+      updateTurnInfo();
+    }
+
+    function renderBoard() {
+      const cells = document.querySelectorAll('.cell');
+      cells.forEach((cell, i) => {
+        const val = board[i];
+        cell.className = 'cell' + (val ? ' taken ' + val.toLowerCase() : '');
+        cell.innerHTML = val ? `<span class="mark">${val}</span>` : '';
+      });
+    }
+
+    function highlightWin(line, player) {
+      const cells = document.querySelectorAll('.cell');
+      line.forEach(i => cells[i].classList.add('win'));
+    }
+
+    function updateTurnInfo() {
+      const cls = `symbol symbol-${current.toLowerCase()}`;
+      let text;
+      if (mode === 'ai') {
+        text = current === 'X'
+          ? `دورك — <span class="${cls}">X</span>`
+          : `الكمبيوتر — <span class="${cls}">O</span>`;
+      } else {
+        text = `دور اللاعب <span class="${cls}">${current}</span>`;
+      }
+      document.getElementById('turn-info').innerHTML = text;
+    }
+
+    function updateScores() {
+      document.getElementById('val-x').textContent = scores.X;
+      document.getElementById('val-o').textContent = scores.O;
+      document.getElementById('val-draw').textContent = scores.D;
+    }
+
+    function getWinner(b) {
+      for (const line of WINS) {
+        const [a, c, d] = line;
+        if (b[a] && b[a] === b[c] && b[a] === b[d]) return line;
+      }
+      return null;
+    }
+
+    /* ── Minimax AI ── */
+    function bestMove() {
+      let best = -Infinity, move = -1;
+      for (let i = 0; i < 9; i++) {
+        if (!board[i]) {
+          board[i] = 'O';
+          const score = minimax(board, 0, false);
+          board[i] = null;
+          if (score > best) { best = score; move = i; }
+        }
+      }
+      return move;
+    }
+
+    function minimax(b, depth, isMax) {
+      const win = getWinner(b);
+      if (win) return isMax ? -10 + depth : 10 - depth;
+      if (b.every(c => c)) return 0;
+
+      if (isMax) {
+        let best = -Infinity;
+        for (let i = 0; i < 9; i++) {
+          if (!b[i]) {
+            b[i] = 'O';
+            best = Math.max(best, minimax(b, depth + 1, false));
+            b[i] = null;
+          }
+        }
+        return best;
+      } else {
+        let best = Infinity;
+        for (let i = 0; i < 9; i++) {
+          if (!b[i]) {
+            b[i] = 'X';
+            best = Math.min(best, minimax(b, depth + 1, true));
+            b[i] = null;
+          }
+        }
+        return best;
+      }
+    }
+  </script>
+</body>
+</html>
